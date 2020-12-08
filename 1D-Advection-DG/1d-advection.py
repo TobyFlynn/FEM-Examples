@@ -37,5 +37,15 @@ elif k == 6:
 grid = StructuredGrid(interval, nx, k, a, fluxFunc, ic)
 dt = (CFL * grid.getdx()) / abs(a)
 
-grid.plot(0)
+print("CFL: " + str(CFL))
+print("dt: " + str(dt))
+
+# Number of time steps
+nt = 100
+
+# Advance in time using 4th order Runge-Kutta Method
+for i in range(nt):
+    grid.rk4Step(dt)
+
+grid.plot(nt * dt)
 plt.show()

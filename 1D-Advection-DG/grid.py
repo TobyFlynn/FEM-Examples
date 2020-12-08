@@ -75,14 +75,8 @@ class Grid:
     def getdx(self):
         return self.dx
 
-    # def plotSolution(self):
-    #     element = self.leftElement
-    #     for i in range(self.nx):
-    #         element.plotLocalSolution()
-    #         element = element.getRightElement()
-
     def plot(self, t):
-        plt.figure("Solution Points")
+        plt.figure("Solution")
         currentElement = self.leftElement
         yVal = []
         xVal = []

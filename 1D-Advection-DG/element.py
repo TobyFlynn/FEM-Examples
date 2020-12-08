@@ -17,7 +17,8 @@ class Element:
         self.fluxFunc = fluxFunc
         self.eps = 10e-12
         self.calcVandermondeMatrix()
-        self.setDifferentiationMatrix()
+        self.calcDifferentiationMatrix()
+        self.calcMInv()
 
     def setLeftElement(self, l):
         self.left = l
@@ -26,7 +27,7 @@ class Element:
         self.right = r
 
     def getSolution(self):
-        return self.u
+        return self.u.copy()
 
     def getGlobalSolutionPoints(self):
         return self.xLocation + ((self.x) * self.dx) / 2
@@ -48,17 +49,17 @@ class Element:
 
     def getLeftU(self):
         # Using LGL points so left solution point is on boundary
-        return self.u[0]
+        return self.getSolution()[0]
 
     def getRightU(self):
         # Using LGL points so right solution point is on boundary
-        return self.u[self.k - 1]
+        return self.getSolution()[self.k - 1]
 
     def getLeftFlux(self):
-        return self.fluxFunc(self.u[0])
+        return self.fluxFunc(self.getSolution()[0])
 
     def getRightFlux(self):
-        return self.fluxFunc(self.u[self.k - 1])
+        return self.fluxFunc(self.getSolution()[self.k - 1])
 
     # Get the Legendre-Gauss-Lobatto points
     def calcLGL(self):
@@ -91,14 +92,37 @@ class Element:
         self.vandermondeGrad = vandermondeGrad
         self.vandermondeInv = np.linalg.inv(self.vandermonde)
 
-    def setDifferentiationMatrix(self):
+    def calcDifferentiationMatrix(self):
         self.diff = np.matmul(self.vandermondeGrad, self.vandermondeInv)
+
+    def calcMInv(self):
+        self.mInv = self.jInv * np.matmul(self.vandermonde, np.transpose(self.vandermonde))
 
     def calcRHS(self, a=1.0):
         fluxVec = np.zeros(self.k)
         fluxVec[0] = -1.0 * (self.getLeftU() - self.ul)
         fluxVec[self.k - 1] = self.getRightU() - self.ur
         rhs = -1.0 * a * self.jInv * np.matmul(self.diff, self.u)
-        mInv = self.j * np.matmul(self.vandermonde, np.transpose(self.vandermonde))
-        rhs = rhs + np.matmul(mInv, fluxVec)
+        rhs = rhs + np.matmul(self.mInv, fluxVec)
         return rhs
+
+    # Functions for rk4
+    def storeK0(self):
+        self.k0 = self.getSolution()
+
+    def storeK1AndUpdate(self, dt):
+        self.k1 = self.calcRHS()
+        self.setSolution(self.k0 + (dt / 2.0) * self.k1)
+
+    def storeK2AndUpdate(self, dt):
+        self.k2 = self.calcRHS()
+        self.setSolution(self.k0 + dt * (self.k2 / 2))
+
+    def storeK3AndUpdate(self, dt):
+        self.k3 = self.calcRHS()
+        self.setSolution(self.k0 + dt * self.k3)
+
+    def storeK4AndUpdate(self, dt):
+        self.k4 = self.calcRHS()
+        vals = self.k0 + (dt / 6.0) * (self.k1 + 2*self.k2 + 2*self.k3 + self.k4)
+        self.setSolution(vals)
