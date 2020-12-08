@@ -6,4 +6,4 @@
 
 2D-Euler-FR contains an implementation of FR for the Euler equations on a 2D grid (Not finished yet)
 
-1D-Advection-DG contains an implementation of the Discontinuous Galerkin method for the 1D advection equation (Not finished yet)
+1D-Advection-DG contains an implementation of the Discontinuous Galerkin method for the 1D advection equation
